@@ -1,7 +1,7 @@
 import unittest
 
 from isa import header
-from translator import encode_line
+from translator import encode_line, assemble
 
 class TranslatorTest(unittest.TestCase):
     def test_halt(self):

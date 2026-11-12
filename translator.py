@@ -1,3 +1,6 @@
+import argparse
+from pathlib import Path
+
 from isa import OPS
 
 
@@ -49,3 +52,32 @@ def encode_line(line: str) -> bytes:
 
     header_bytes = bytes((code, register[0], register[1], len(extension) // 4))
     return header_bytes + extension
+
+def assemble(source: str) -> bytes:
+    program = bytearray()
+
+    for line_number, line in enumerate(source.splitlines(), start=1):
+        try:
+            encoded = encode_line(line)
+        except ValueError as error:
+            raise ValueError(f"строка {line_number}: {error}") from error
+
+        program.extend(encoded)
+
+    return bytes(program)
+
+def main():
+    parser = argparse.ArgumentParser(description="Собрать исходник в машинный код")
+    parser.add_argument("source", type=Path, help="исходник .asm")
+    parser.add_argument("output", type=Path, help="выход .bin")
+    args = parser.parse_args()
+
+    try:
+        source = args.source.read_text(encoding="utf-8")
+        program = assemble(source)
+        args.output.write_bytes(program)
+    except (OSError, ValueError) as error:
+        parser.exit(1, f"{args.source}: {error}\n")
+
+if __name__ == "__main__":
+    main()
