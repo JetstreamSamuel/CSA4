@@ -14,7 +14,7 @@ class TranslatorTest(unittest.TestCase):
         data = encode_line("li r3, 42")
         self.assertEqual(data, bytes.fromhex("02 03 00 01 2a 00 00 00"))
 
-        word = int.from_bytes(data[4:], "little")
+        word = int.from_bytes(data[:4], "little")
         self.assertEqual(header(word), ("li", (3,), 1))
 
     def test_negative_immediate(self):
