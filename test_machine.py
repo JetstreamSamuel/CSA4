@@ -72,3 +72,28 @@ class MachineTest(unittest.TestCase):
 
         cpu.step()
         self.assertTrue(cpu.halted)
+
+    def test_signed_min_max(self):
+        cases = [
+            ("min", 5, -1, 0xFFFFFFFF),
+            ("max", -5, 5, 5),
+            ("min", -7, -3, 0xFFFFFFF9),
+            ("max", -2147483648, 2147483647, 0x7FFFFFFF)
+        ]
+
+        for op, left, right, expected in cases:
+            with self.subTest(op=op, left=left, right=right):
+                source = (
+                    f"li r2, {left}\n"
+                    f"li r3, {right}\n"
+                    f"{op} r2, r3\n"
+                    "halt\n"
+                )
+
+                cpu = Machine(assemble(source))
+
+                while not cpu.halted:
+                    cpu.step()
+
+                self.assertEqual(cpu.regs[2], expected)
+                self.assertEqual(cpu.regs[3], right & 0xFFFFFFFF)
