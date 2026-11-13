@@ -216,3 +216,32 @@ class MachineTest(unittest.TestCase):
 
         self.assertEqual(cpu.regs[2], 0x80000000)
         self.assertEqual((cpu.z, cpu.n, cpu.v, cpu.c), (False, True, True, False))
+
+    def test_signed_multiplication(self):
+        cases = [
+            (-3, 7, 0xFFFFFFEB, False),
+            (-1073741824, 2, 0x80000000, False),
+            (1073741824, 2, 0x80000000, True),
+            (65536, 65536, 0, True),
+        ]
+
+        for left, right, expected, overflow in cases:
+            with self.subTest(left=left, right=right):
+                source = (
+                    f"li r2, {left}\n"
+                    f"li r3, {right}\n"
+                    "mul r2, r3\n"
+                    "halt\n"
+                )
+                cpu = Machine(assemble(source))
+                cpu.c = True
+
+                while not cpu.halted:
+                    cpu.step()
+
+                self.assertEqual(cpu.regs[2], expected)
+                self.assertEqual(cpu.regs[3], right & 0xFFFFFFFF)
+                self.assertEqual(cpu.v, overflow)
+                self.assertEqual(cpu.z, expected == 0)
+                self.assertEqual(cpu.n, bool(expected & 0x80000000))
+                self.assertFalse(cpu.c)
