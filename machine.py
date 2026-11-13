@@ -45,6 +45,12 @@ class Machine:
         elif ints.op == "sub":
             dst, src = ints.regs
             self.regs[dst] = (self.regs[dst] - self.regs[src]) & MASK
+        elif ints.op == "and":
+            dst, src = ints.regs
+            self.regs[dst] = self.regs[dst] & self.regs[src]
+        elif ints.op == "or":
+            dst, src = ints.regs
+            self.regs[dst] = self.regs[dst] | self.regs[src]
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 

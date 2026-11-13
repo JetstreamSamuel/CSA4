@@ -7,7 +7,9 @@ OPS = (
     ("mov", "rr"),
     ("li", "ri"),
     ("add", "rr"),
-    ("sub", "rr")
+    ("sub", "rr"),
+    ("and", "rr"),
+    ("or", "rr")
 )
 
 
