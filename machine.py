@@ -1,4 +1,4 @@
-from isa import MASK, Ints, header, signed
+from isa import MASK, Inst, header, signed
 
 
 class Machine:
@@ -13,6 +13,7 @@ class Machine:
         self.n = False
         self.z = False
         self.v = False
+        self.c = False
 
     def compare(self, left: int, right: int) -> None:
         diff = signed(left) - signed(right)
@@ -22,6 +23,19 @@ class Machine:
         self.n = bool(res & (1 << 31))
         self.v = diff != signed(res)
 
+    def add_with_flags(self, left: int, right: int, carry_in: int) -> int:
+        total = left + right + carry_in
+        result = total & MASK
+
+        self.z = result == 0
+        self.n = bool(result & (1 << 31))
+        self.c = total > MASK
+
+        signed_total = signed(left) + signed(right) + carry_in
+        self.v = signed_total != signed(result)
+
+        return result
+
 
     def read_word(self, address: int) -> int:
         if address < 0 or address + 4 > len(self.memory):
@@ -29,7 +43,7 @@ class Machine:
 
         return int.from_bytes(self.memory[address : address + 4], "little")
 
-    def fetch(self) -> Ints:
+    def fetch(self) -> Inst:
         word = self.read_word(self.pc)
         op, regs, count = header(word)
 
@@ -38,64 +52,68 @@ class Machine:
             for i in range(count)
         )
 
-        return Ints(pc=self.pc, op=op, regs=regs, ext=ext)
+        return Inst(pc=self.pc, op=op, regs=regs, ext=ext)
 
-    def step(self) -> Ints:
+    def step(self) -> Inst:
         if self.halted:
             raise RuntimeError("Процессор уже остановлен")
 
-        ints = self.fetch()
+        inst = self.fetch()
 
-        if ints.op == "li":
-            dst, = ints.regs
-            self.regs[dst] = ints.ext[0]
-        elif ints.op == "mov":
-            dst, src = ints.regs
+        if inst.op == "li":
+            dst, = inst.regs
+            self.regs[dst] = inst.ext[0]
+        elif inst.op == "mov":
+            dst, src = inst.regs
             self.regs[dst] = self.regs[src]
-        elif ints.op == "halt":
+        elif inst.op == "halt":
             self.halted = True
-        elif ints.op == "add":
-            dst, src = ints.regs
+        elif inst.op == "add":
+            dst, src = inst.regs
             self.regs[dst] = (self.regs[dst] + self.regs[src]) & MASK
-        elif ints.op == "sub":
-            dst, src = ints.regs
+        elif inst.op == "sub":
+            dst, src = inst.regs
             self.regs[dst] = (self.regs[dst] - self.regs[src]) & MASK
-        elif ints.op == "and":
-            dst, src = ints.regs
+        elif inst.op == "and":
+            dst, src = inst.regs
             self.regs[dst] = self.regs[dst] & self.regs[src]
-        elif ints.op == "or":
-            dst, src = ints.regs
+        elif inst.op == "or":
+            dst, src = inst.regs
             self.regs[dst] = self.regs[dst] | self.regs[src]
-        elif ints.op == "min":
-            dst, src = ints.regs
+        elif inst.op == "min":
+            dst, src = inst.regs
             if signed(self.regs[src]) < signed(self.regs[dst]):
                 self.regs[dst] = self.regs[src]
-        elif ints.op == "max":
-            dst, src = ints.regs
+        elif inst.op == "max":
+            dst, src = inst.regs
             if signed(self.regs[src]) > signed(self.regs[dst]):
                 self.regs[dst] = self.regs[src]
-        elif ints.op in ("divu", "modu"):
-            dst, src = ints.regs
+        elif inst.op in ("divu", "modu"):
+            dst, src = inst.regs
             dividend = self.regs[dst]
             divisor = self.regs[src]
 
             if divisor == 0:
-                raise ValueError(f"{ints.op}: деление на ноль")
-            if ints.op == "divu":
+                raise ValueError(f"{inst.op}: деление на ноль")
+            if inst.op == "divu":
                 self.regs[dst] = dividend // divisor
             else:
                 self.regs[dst] = dividend % divisor
-        elif ints.op == "addi":
-            dst, = ints.regs
-            self.regs[dst] = (self.regs[dst] + ints.ext[0]) & MASK
-        elif ints.op == "cmp":
-            left, right = ints.regs
+        elif inst.op == "addi":
+            dst, = inst.regs
+            self.regs[dst] = (self.regs[dst] + inst.ext[0]) & MASK
+        elif inst.op == "cmp":
+            left, right = inst.regs
             self.compare(self.regs[left], self.regs[right])
-        elif ints.op == "cmpi":
-            left, = ints.regs
-            self.compare(self.regs[left], ints.ext[0])
+        elif inst.op == "cmpi":
+            left, = inst.regs
+            self.compare(self.regs[left], inst.ext[0])
+        elif inst.op in ("addf", "addc"):
+            dst, src = inst.regs
+            carry_in = int(self.c) if inst.op == "addc" else 0
+            self.regs[dst] = self.add_with_flags(self.regs[dst], self.regs[src], carry_in)
         else:
-            raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
+            raise ValueError(f"исполнение команды {inst.op!r} не реализовано")
 
-        self.pc = ints.end
-        return ints
+        self.pc = inst.end
+        return inst

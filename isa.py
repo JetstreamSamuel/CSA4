@@ -16,7 +16,9 @@ OPS = (
     ("modu", "rr"),
     ("addi", "ri"),
     ("cmp", "rr"),
-    ("cmpi", "ri")
+    ("cmpi", "ri"),
+    ("addf", "rr"),
+    ("addc", "rr")
 )
 
 def signed(word: int) -> int:
@@ -27,7 +29,7 @@ def signed(word: int) -> int:
 
 
 @dataclass(frozen=True)
-class Ints:
+class Inst:
     pc: int
     op: str
     regs: tuple[int, ...]
