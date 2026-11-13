@@ -1,0 +1,46 @@
+from isa import Ints, header
+
+
+class Machine:
+    def __init__(self, program: bytes):
+        self.memory = bytearray()
+        self.regs = [0] * 16
+        self.pc = 0
+        self.halted = False
+
+    def read_word(self, address: int) -> int:
+        if address < 0 or address + 4 > len(self.memory):
+            raise ValueError(f"неполное слово по адресу {address:#x}")
+
+        return int.from_bytes(self.memory[address : address + 4], "little")
+
+    def fetch(self) -> Ints:
+        word = self.read_word(self.pc)
+        op, regs, count = header(word)
+
+        ext = tuple(
+            self.read_word(self.pc + 4 * (i + 1))
+            for i in range(count)
+        )
+
+        return Ints(pc=self.pc, op=op, regs=regs, ext=ext)
+
+    def step(self) -> Ints:
+        if self.halted:
+            raise RuntimeError("Процессор уже остановлен")
+
+        ints = self.fetch()
+
+        if ints.op == "li":
+            dst, = ints.regs
+            self.regs[dst] = ints.ext[0]
+        elif ints.op == "mov":
+            dst, src = ints.regs
+            self.regs[dst] = self.regs[src]
+        elif ints.op == "halt":
+            self.halted = True
+        else:
+            raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
+
+        self.pc = ints.end
+        return ints
