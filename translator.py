@@ -47,6 +47,10 @@ def encode_line(line: str) -> bytes:
             if not -(1 << 31) <= value < (1 << 32):
                 raise ValueError(f"значение не помещается в слово: {operand}")
             extension = (value & 0xFFFFFFFF).to_bytes(4, "little")
+        elif kind == "m":
+            if not (operand.startswith("[") and operand.endswith("]")):
+                raise ValueError(f"ожидается адрес вида [rn], получено: {operand!r}")
+            register[index] = parse_register(operand[1:-1].strip().lower())
         else:
             raise ValueError(f"неподдерживаемый тип операнда: {kind}")
 
