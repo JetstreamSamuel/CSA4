@@ -24,3 +24,20 @@ class TranslatorTest(unittest.TestCase):
         for line in ("mov r2", "halt r1", "li r16, 42"):
             with self.subTest(line=line), self.assertRaises(ValueError):
                 encode_line(line)
+
+    def test_assemble_program(self):
+        source = "li r3, 42\nmov r2, r3\nhalt\n"
+
+        expected = bytes.fromhex(
+            "02 03 00 01 2a 00 00 00 "
+            "01 02 03 00 "
+            "00 00 00 00"
+        )
+
+        self.assertEqual(assemble(source), expected)
+
+    def test_assemble_reports_source_line(self):
+        source = "li r3, 42\n\nmov r2, r16\n"
+
+        with self.assertRaisesRegex(ValueError, "строка 3:"):
+            assemble(source)
