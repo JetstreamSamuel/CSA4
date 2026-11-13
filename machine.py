@@ -112,6 +112,17 @@ class Machine:
             dst, src = inst.regs
             carry_in = int(self.c) if inst.op == "addc" else 0
             self.regs[dst] = self.add_with_flags(self.regs[dst], self.regs[src], carry_in)
+        elif inst.op == "mul":
+            dst, src = inst.regs
+
+            prod = signed(self.regs[dst] * self.regs[src])
+            res = prod & MASK
+
+            self.regs[dst] = res
+            self.z = res == 0
+            self.n = bool(res & (1 << 31))
+            self.v = prod != signed(res)
+            self.c = False
         else:
             raise ValueError(f"исполнение команды {inst.op!r} не реализовано")
 

@@ -18,7 +18,8 @@ OPS = (
     ("cmp", "rr"),
     ("cmpi", "ri"),
     ("addf", "rr"),
-    ("addc", "rr")
+    ("addc", "rr"),
+    ("mul", "rr")
 )
 
 def signed(word: int) -> int:
