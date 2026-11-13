@@ -134,7 +134,7 @@ class MachineTest(unittest.TestCase):
                     cpu.step()
 
                 self.assertEqual(cpu.regs[2], 17)
-                
+
     def test_addi(self):
         cases = [
             (7, 5, 12),
@@ -184,3 +184,35 @@ class MachineTest(unittest.TestCase):
         cpu.step()
         self.assertEqual((cpu.z, cpu.n, cpu.v), (True, False, False))
         self.assertEqual(cpu.regs[2], 0x7FFFFFFF)
+
+    def test_add_with_carry_across_two_words(self):
+        source = (
+            "li r2, 0xFFFFFFFF\n"
+            "li r3, 0\n"
+            "li r4, 1\n"
+            "li r5, 0\n"
+            "addf r2, r4\n"
+            "addc r3, r5\n"
+            "halt\n"
+        )
+        cpu = Machine(assemble(source))
+
+        for _ in range(4):
+            cpu.step()
+
+        cpu.step()
+        self.assertEqual(cpu.regs[2], 0)
+        self.assertEqual((cpu.c, cpu.v), (True, False))
+
+        cpu.step()
+        self.assertEqual(cpu.regs[3], 1)
+        self.assertFalse(cpu.c)
+
+    def test_addf_signed_overflow_without_carry(self):
+        cpu = Machine(assemble("li r2, 0x7FFFFFFF\nli r3, 1\naddf r2, r3\nhalt"))
+
+        while not cpu.halted:
+            cpu.step()
+
+        self.assertEqual(cpu.regs[2], 0x80000000)
+        self.assertEqual((cpu.z, cpu.n, cpu.v, cpu.c), (False, True, True, False))
