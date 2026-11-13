@@ -134,6 +134,7 @@ class MachineTest(unittest.TestCase):
                     cpu.step()
 
                 self.assertEqual(cpu.regs[2], 17)
+                
     def test_addi(self):
         cases = [
             (7, 5, 12),
@@ -157,3 +158,29 @@ class MachineTest(unittest.TestCase):
                 self.assertEqual(cpu.regs[2], expected)
                 self.assertEqual(cpu.pc, 16)
                 self.assertEqual(cpu.step().op, "halt")
+
+    def test_cmp_sets_flags_without_changing_registers(self):
+        cpu = Machine(assemble("li r2, 3\nli r3, 5\ncmp r2, r3\nhalt"))
+
+        cpu.step()
+        cpu.step()
+        cpu.step()
+
+        self.assertEqual((cpu.z, cpu.n, cpu.v), (False, True, False))
+        self.assertEqual((cpu.regs[2], cpu.regs[3]), (3, 5))
+
+    def test_cmpi_overflow_then_equality(self):
+        cpu = Machine(assemble(
+            "li r2, 0x7FFFFFFF\n"
+            "cmpi r2, -1\n"
+            "cmpi r2, 0x7FFFFFFF\n"
+            "halt\n"
+        ))
+
+        cpu.step()
+        cpu.step()
+        self.assertEqual((cpu.z, cpu.n, cpu.v), (False, True, True))
+
+        cpu.step()
+        self.assertEqual((cpu.z, cpu.n, cpu.v), (True, False, False))
+        self.assertEqual(cpu.regs[2], 0x7FFFFFFF)
