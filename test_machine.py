@@ -97,3 +97,40 @@ class MachineTest(unittest.TestCase):
 
                 self.assertEqual(cpu.regs[2], expected)
                 self.assertEqual(cpu.regs[3], right & 0xFFFFFFFF)
+
+    def test_unsigned_division_module(self):
+        cases = [
+            (123, 10, 12, 3),
+            (3, 10, 0, 3),
+            (0xFFFFFFFF, 2, 0x7FFFFFFF, 1),
+        ]
+
+        for value, divisor, quotient, remainder in cases:
+            with self.subTest(value=value, divisor=divisor):
+                source = (
+                    f"li r2, {value}\n"
+                    "mov r4, r2\n"
+                    f"li r3, {divisor}\n"
+                    "divu r2, r3\n"
+                    "modu r4, r3\n"
+                    "halt\n"
+                )
+                cpu = Machine(assemble(source))
+
+                while not cpu.halted:
+                    cpu.step()
+
+                self.assertEqual(cpu.regs[2], quotient)
+                self.assertEqual(cpu.regs[4], remainder)
+                self.assertEqual(cpu.regs[3], divisor)
+
+    def test_zero_divisor(self):
+        for op in ("divu", "modu"):
+            with self.subTest(op=op):
+                cpu = Machine(assemble(f"li r2, 17\n{op} r2, r3\nhalt"))
+                cpu.step()
+
+                with self.assertRaisesRegex(ValueError, "деление на ноль"):
+                    cpu.step()
+
+                self.assertEqual(cpu.regs[2], 17)
