@@ -59,6 +59,17 @@ class Machine:
             dst, src = ints.regs
             if signed(self.regs[src]) > signed(self.regs[dst]):
                 self.regs[dst] = self.regs[src]
+        elif ints.op in ("divu", "modu"):
+            dst, src = ints.regs
+            dividend = self.regs[dst]
+            divisor = self.regs[src]
+
+            if divisor == 0:
+                raise ValueError(f"{ints.op}: деление на ноль")
+            if ints.op == "divu":
+                self.regs[dst] = dividend // divisor
+            else:
+                self.regs[dst] = dividend % divisor
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 
