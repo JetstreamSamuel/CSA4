@@ -27,3 +27,22 @@ class MachineTest(unittest.TestCase):
 
         self.assertEqual(cpu.pc, 0)
         self.assertEqual(cpu.regs[3], 0)
+
+    def test_register_arithmetic(self):
+        cases = [
+            ("add", 10, 4, 14),
+            ("sub", 10, 4, 6),
+            ("add", 0xFFFFFFFF, 1, 0),
+            ("sub", 0, 1, 0xFFFFFFFF)
+        ]
+
+        for op, left, right, expected in cases:
+            with self.subTest(op=op, left=left, right=right):
+                source = f"li r2, {left}\nli r3, {right}\n{op} r2, r3\nhalt"
+                cpu = Machine(assemble(source))
+
+                while not cpu.halted:
+                    cpu.step()
+
+                self.assertEqual(cpu.regs[2], expected)
+                self.assertEqual(cpu.regs[3], right)
