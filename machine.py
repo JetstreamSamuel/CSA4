@@ -5,8 +5,23 @@ class Machine:
     def __init__(self, program: bytes):
         self.memory = bytearray(program)
         self.regs = [0] * 16
+
         self.pc = 0
+
         self.halted = False
+
+        self.n = False
+        self.z = False
+        self.v = False
+
+    def compare(self, left: int, right: int) -> None:
+        diff = signed(left) - signed(right)
+        res = diff & MASK
+
+        self.z = res == 0
+        self.n = bool(res & (1 << 31))
+        self.v = diff != signed(res)
+
 
     def read_word(self, address: int) -> int:
         if address < 0 or address + 4 > len(self.memory):
@@ -73,7 +88,14 @@ class Machine:
         elif ints.op == "addi":
             dst, = ints.regs
             self.regs[dst] = (self.regs[dst] + ints.ext[0]) & MASK
-            
+        elif ints.op == "cmp":
+            left, right = ints.regs
+            self.compare(self.regs[left], self.regs[right])
+        elif ints.op == "cmpi":
+            left, ints.regs
+            self.compare(self.regs[left], ints.ext[0])
+
+
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 
