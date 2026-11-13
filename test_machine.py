@@ -134,3 +134,26 @@ class MachineTest(unittest.TestCase):
                     cpu.step()
 
                 self.assertEqual(cpu.regs[2], 17)
+    def test_addi(self):
+        cases = [
+            (7, 5, 12),
+            (7, -1, 6),
+            (0, -1, 0xFFFFFFFF),
+            (0xFFFFFFFF, 1, 0),
+        ]
+
+        for initial, immediate, expected in cases:
+            with self.subTest(initial=initial, immediate=immediate):
+                source = (
+                    f"li r2, {initial}\n"
+                    f"addi r2, {immediate}\n"
+                    "halt\n"
+                )
+                cpu = Machine(assemble(source))
+
+                cpu.step()
+                cpu.step()
+
+                self.assertEqual(cpu.regs[2], expected)
+                self.assertEqual(cpu.pc, 16)
+                self.assertEqual(cpu.step().op, "halt")
