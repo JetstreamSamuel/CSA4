@@ -13,7 +13,8 @@ OPS = (
     ("min", "rr"),
     ("max", "rr"),
     ("divu", "rr"),
-    ("modu", "rr")
+    ("modu", "rr"),
+    ("addi", "ri")
 )
 
 def signed(word: int) -> int:

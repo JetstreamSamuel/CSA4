@@ -70,6 +70,10 @@ class Machine:
                 self.regs[dst] = dividend // divisor
             else:
                 self.regs[dst] = dividend % divisor
+        elif ints.op == "addi":
+            dst, = ints.regs
+            self.regs[dst] = (self.regs[dst] + ints.ext[0]) & MASK
+            
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 
