@@ -1,4 +1,4 @@
-from isa import MASK, Ints, header
+from isa import MASK, Ints, header, signed
 
 
 class Machine:
@@ -51,6 +51,14 @@ class Machine:
         elif ints.op == "or":
             dst, src = ints.regs
             self.regs[dst] = self.regs[dst] | self.regs[src]
+        elif ints.op == "min":
+            dst, src = ints.regs
+            if signed(self.regs[src]) < signed(self.regs[dst]):
+                self.regs[dst] = self.regs[src]
+        elif ints.op == "max":
+            dst, src = ints.regs
+            if signed(self.regs[src]) > signed(self.regs[dst]):
+                self.regs[dst] = self.regs[src]
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 

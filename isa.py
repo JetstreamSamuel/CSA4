@@ -9,8 +9,16 @@ OPS = (
     ("add", "rr"),
     ("sub", "rr"),
     ("and", "rr"),
-    ("or", "rr")
+    ("or", "rr"),
+    ("min", "rr"),
+    ("max", "rr")
 )
+
+def signed(word: int) -> int:
+    word &= MASK
+    if word >= (1 << 31):
+        return word - (1 << 31)
+    return word
 
 
 @dataclass(frozen=True)
