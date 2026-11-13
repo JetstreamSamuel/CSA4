@@ -17,7 +17,7 @@ OPS = (
 def signed(word: int) -> int:
     word &= MASK
     if word >= (1 << 31):
-        return word - (1 << 31)
+        return word - (1 << 32)
     return word
 
 
