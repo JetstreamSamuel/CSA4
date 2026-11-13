@@ -46,3 +46,29 @@ class MachineTest(unittest.TestCase):
 
                 self.assertEqual(cpu.regs[2], expected)
                 self.assertEqual(cpu.regs[3], right)
+
+    def test_bit_operations(self):
+        source = (
+            "li r2, 0x123456AB\n"
+            "li r3, 0xFF\n"
+            "and r2, r3\n"
+            "li r3, 0x80000001\n"
+            "or r2, r3\n"
+            "halt\n"
+        )
+
+        cpu = Machine(assemble(source))
+
+        cpu.step()
+        cpu.step()
+        cpu.step()
+        self.assertEqual(cpu.regs[2], 0xAB)
+        self.assertEqual(cpu.regs[3], 0xFF)
+
+        cpu.step()
+        cpu.step()
+        self.assertEqual(cpu.regs[2], 0x800000AB)
+        self.assertEqual(cpu.regs[3], 0x80000001)
+
+        cpu.step()
+        self.assertTrue(cpu.halted)
