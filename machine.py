@@ -3,7 +3,7 @@ from isa import Ints, header
 
 class Machine:
     def __init__(self, program: bytes):
-        self.memory = bytearray()
+        self.memory = bytearray(program)
         self.regs = [0] * 16
         self.pc = 0
         self.halted = False
