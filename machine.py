@@ -92,10 +92,8 @@ class Machine:
             left, right = ints.regs
             self.compare(self.regs[left], self.regs[right])
         elif ints.op == "cmpi":
-            left, ints.regs
+            left, = ints.regs
             self.compare(self.regs[left], ints.ext[0])
-
-
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 
