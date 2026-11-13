@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 MASK = 0xFFFFFFFF
+RAM_SIZE = 64 * 1024
 
 OPS = (
     ("halt", ""),
@@ -19,7 +20,11 @@ OPS = (
     ("cmpi", "ri"),
     ("addf", "rr"),
     ("addc", "rr"),
-    ("mul", "rr")
+    ("mul", "rr"),
+    ("ld.l", "rm"),
+    ("ld.b", "rm"),
+    ("st.l", "mr"),
+    ("st.b", "mr")
 )
 
 def signed(word: int) -> int:
@@ -48,7 +53,7 @@ def header(word: int) -> tuple[str, tuple[int, ...], int]:
         raise ValueError(f"illegal opcode {code}")
 
     name, form = OPS[code]
-    register_count = form.count("r")
+    register_count = form.count("r") + form.count("m")
 
     if count != form.count("i"):
         raise ValueError("invalid extension count")
