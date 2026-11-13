@@ -115,7 +115,7 @@ class Machine:
         elif inst.op == "mul":
             dst, src = inst.regs
 
-            prod = signed(self.regs[dst] * self.regs[src])
+            prod = signed(self.regs[dst]) * signed(self.regs[src])
             res = prod & MASK
 
             self.regs[dst] = res
