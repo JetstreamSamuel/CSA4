@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 
+MASK = 0xFFFFFFFF
 
 OPS = (
     ("halt", ""),
     ("mov", "rr"),
-    ("li", "ri")
+    ("li", "ri"),
+    ("add", "rr"),
+    ("sub", "rr")
 )
 
 

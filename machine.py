@@ -1,4 +1,4 @@
-from isa import Ints, header
+from isa import MASK, Ints, header
 
 
 class Machine:
@@ -39,6 +39,12 @@ class Machine:
             self.regs[dst] = self.regs[src]
         elif ints.op == "halt":
             self.halted = True
+        elif ints.op == "add":
+            dst, src = ints.regs
+            self.regs[dst] = (self.regs[dst] + self.regs[src]) & MASK
+        elif ints.op == "sub":
+            dst, src = ints.regs
+            self.regs[dst] = (self.regs[dst] - self.regs[src]) & MASK
         else:
             raise ValueError(f"исполнение команды {ints.op!r} не реализовано")
 
