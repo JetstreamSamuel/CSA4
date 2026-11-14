@@ -245,3 +245,25 @@ class MachineTest(unittest.TestCase):
                 self.assertEqual(cpu.z, expected == 0)
                 self.assertEqual(cpu.n, bool(expected & 0x80000000))
                 self.assertFalse(cpu.c)
+
+    def test_word_and_byte_memory_access(self):
+        source = (
+            "li r3, 0x100\n"
+            "li r2, 0x12345678\n"
+            "st.l [r3], r2\n"
+            "ld.l r4, [r3]\n"
+            "li r5, 0x101\n"
+            "li r6, 0xABCD\n"
+            "st.b [r5], r6\n"
+            "ld.b r7, [r5]\n"
+            "halt\n"
+        )
+        cpu = Machine(assemble(source))
+
+        while not cpu.halted:
+            cpu.step()
+
+        self.assertEqual(cpu.regs[3], 0x100)
+        self.assertEqual(cpu.regs[4], 0x12345678)
+        self.assertEqual(cpu.regs[7], 0xCD)
+        self.assertEqual(cpu.memory[0x100:0x104], bytes.fromhex("78 cd 34 12"))
