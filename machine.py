@@ -1,9 +1,15 @@
-from isa import MASK, Inst, header, signed
+from isa import RAM_SIZE, MASK, Inst, header, signed
 
 
 class Machine:
     def __init__(self, program: bytes):
-        self.memory = bytearray(program)
+        if len(program) > RAM_SIZE:
+            raise ValueError("программа не помещается в памяти")
+        
+        self.memory = bytearray(RAM_SIZE)
+        self.memory[:len(program)] = program
+        self.program_size = len(program)
+
         self.regs = [0] * 16
 
         self.pc = 0
@@ -36,19 +42,32 @@ class Machine:
 
         return result
 
+    def check_address(self, address: int, size: int) -> None:
+        if address < 0 or address + size > len(self.memory):
+            raise ValueError(f"адрес вне RAM: {address:#x}")
+        if size == 4 and address % 4 != 0:
+            raise ValueError(f"невыровненный адрес слова: {address:#x}")
+
 
     def read_word(self, address: int) -> int:
-        if address < 0 or address + 4 > len(self.memory):
-            raise ValueError(f"неполное слово по адресу {address:#x}")
-
+        self.check_address(address, 4)
         return int.from_bytes(self.memory[address : address + 4], "little")
 
+    def write_word(self, address: int, value: int) -> None:
+        self.check_address(address, 4)
+        self.memory[address : address + 4] = value.to_bytes(4, "little")
+
+    def fetch_word(self, address: int) -> int:
+        if address + 4 > self.program_size:
+            raise ValueError(f"неполное слово по адресу: {address:#x}")
+        return self.read_word(address)
+
     def fetch(self) -> Inst:
-        word = self.read_word(self.pc)
+        word = self.fetch_word(self.pc)
         op, regs, count = header(word)
 
         ext = tuple(
-            self.read_word(self.pc + 4 * (i + 1))
+            self.fetch_word(self.pc + 4 * (i + 1))
             for i in range(count)
         )
 
