@@ -142,6 +142,24 @@ class Machine:
             self.n = bool(res & (1 << 31))
             self.v = prod != signed(res)
             self.c = False
+        elif inst.op in ("ld.l", "ld.b"):
+            dst, base = inst.regs
+            address = self.regs[base]
+
+            if inst.op == "ld.l":
+                self.regs[dst] = self.read_word(address)
+            else:
+                self.check_address(address, 1)
+                self.regs[dst] = self.memory[address]
+        elif inst.op in ("st.l", "st.b"):
+            base, src = inst.regs
+            address = self.regs[base]
+            value = self.regs[src]
+            if inst.op == "st.l":
+                self.write_word(address, value)
+            else:
+                self.check_address(address, 1)
+                self.memory[address] = value & 0xFF
         else:
             raise ValueError(f"исполнение команды {inst.op!r} не реализовано")
 
